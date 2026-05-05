@@ -1,0 +1,101 @@
+[
+  {
+    "name": "single item, no discount",
+    "input": {
+      "items": [
+        { "productId": "p1", "unitPriceCents": 1000, "quantity": 2 }
+      ],
+      "coupon": null
+    },
+    "expected": {
+      "totalCents": 2000
+    }
+  },
+  {
+    "name": "multiple items",
+    "input": {
+      "items": [
+        { "productId": "p1", "unitPriceCents": 1000, "quantity": 2 },
+        { "productId": "p2", "unitPriceCents": 500, "quantity": 3 }
+      ],
+      "coupon": null
+    },
+    "expected": {
+      "totalCents": 3500
+    }
+  },
+  {
+    "name": "percentage coupon",
+    "input": {
+      "items": [
+        { "productId": "p1", "unitPriceCents": 1000, "quantity": 2 }
+      ],
+      "coupon": { "type": "percentage", "value": 10 }
+    },
+    "expected": {
+      "totalCents": 1800
+    }
+  },
+  {
+    "name": "fixed coupon",
+    "input": {
+      "items": [
+        { "productId": "p1", "unitPriceCents": 1000, "quantity": 2 }
+      ],
+      "coupon": { "type": "fixed", "valueCents": 300 }
+    },
+    "expected": {
+      "totalCents": 1700
+    }
+  },
+  {
+    "name": "coupon cannot make total negative",
+    "input": {
+      "items": [
+        { "productId": "p1", "unitPriceCents": 100, "quantity": 1 }
+      ],
+      "coupon": { "type": "fixed", "valueCents": 500 }
+    },
+    "expected": {
+      "totalCents": 0
+    }
+  },
+  {
+    "name": "empty order is invalid",
+    "input": {
+      "items": [],
+      "coupon": null
+    },
+    "error": "EMPTY_ORDER"
+  },
+  {
+    "name": "zero quantity is invalid",
+    "input": {
+      "items": [
+        { "productId": "p1", "unitPriceCents": 1000, "quantity": 0 }
+      ],
+      "coupon": null
+    },
+    "error": "INVALID_QUANTITY"
+  },
+  {
+    "name": "negative quantity is invalid",
+    "input": {
+      "items": [
+        { "productId": "p1", "unitPriceCents": 1000, "quantity": -1 }
+      ],
+      "coupon": null
+    },
+    "error": "INVALID_QUANTITY"
+  },
+  {
+    "name": "zero price is invalid",
+    "input": {
+      "items": [
+        { "productId": "p1", "unitPriceCents": 0, "quantity": 1 }
+      ],
+      "coupon": null
+    },
+    "error": "INVALID_PRICE"
+  }
+]

@@ -1,0 +1,41 @@
+id: git-debug
+label: "Git, Debug & CLI"
+tier: 0
+track: tooling
+devshop_stage: 0
+requires: [start]
+unlocks: [lang-fundamentals]
+
+description: >
+  Git fluido: branches, PRs, resolución de conflictos, commits claros.
+  Debugging con breakpoints, lectura de stack traces, reproducir bugs.
+  CLI como herramienta real. Code review básico.
+
+deliverables:
+  - Resolver bugs pequeños en una API existente sin IA, explicando causa raíz
+  - Hacer un PR claro con descripción técnica útil
+  - Reconstruir qué pasó leyendo logs y stack traces
+
+exercises:
+  - id: 00-diagnostic
+    title: "Diagnóstico de nivel"
+  - id: 01-js-basic
+    title: "Git History Parser"
+    lang: JS/TS
+    level: Básico
+  - id: 02-python-contrast
+    title: "Commit Analyzer"
+    lang: Python
+    level: Básico+
+  - id: 03-go-contrast
+    title: "Stack Trace Parser"
+    lang: Go
+    level: Intermedio
+  - id: 04-applied
+    title: "Debug & Fix una API rota"
+    lang: JS/TS
+    level: Aplicado
+  - id: 05-devshop-integration
+    title: "DevShop Stage 0 — Audit Log con Git metadata"
+    lang: Mixto
+    level: Integración

@@ -1,0 +1,9 @@
+id: 04-applied
+title: "Debug & Fix una API rota"
+module: git-debug
+lang: JS/TS
+level: Aplicado
+concept: "Debugging real: leer stack traces, identificar causa raíz, escribir el test que reproduce el bug antes de corregirlo"
+time: 75min
+tdd: required
+debate_gpt: true

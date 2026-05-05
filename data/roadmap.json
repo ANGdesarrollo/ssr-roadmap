@@ -1,0 +1,338 @@
+{
+  "title": "Junior → Semi Senior Backend",
+  "learning_mode": {
+    "default": "tdd",
+    "ai_usage": "restricted",
+    "rule": "Sin IA para ejercicios, katas y código desde cero. IA solo para comparar alternativas o pedir feedback, nunca para generar la solución."
+  },
+  "devshop": {
+    "description": "Sistema común transversal. Los ejercicios 1-4 de cada módulo usan dominio propio. El ejercicio 5 integra al sistema DevShop en su estado actual.",
+    "entities": ["User", "Product", "Inventory", "Order", "OrderItem", "Payment", "PaymentAttempt", "Notification", "Role", "DomainEvent", "OutboxMessage", "AuditLog"],
+    "stages": {
+      "0": "fixtures + funciones puras",
+      "1": "use cases + in-memory repos",
+      "2": "NestJS + HTTP sin DB",
+      "3": "PostgreSQL + migrations",
+      "4": "auth + jobs + concurrencia",
+      "5": "observabilidad + performance"
+    }
+  },
+  "nodes": [
+    {
+      "id": "start",
+      "label": "Backend Junior",
+      "description": "El punto de partida. Sabés hacer APIs REST, aplicás patrones con ayuda de IA. El objetivo es entender el por qué de cada decisión.",
+      "tier": 0,
+      "track": "base",
+      "requires": [],
+      "unlocks": ["git-debug", "lang-fundamentals"],
+      "deliverables": []
+    },
+    {
+      "id": "git-debug",
+      "label": "Git, Debug & CLI",
+      "description": "Git fluido: branches, PRs, resolución de conflictos, commits claros. Debugging con breakpoints, lectura de stack traces, reproducir bugs. CLI como herramienta real. Code review básico.",
+      "tier": 0,
+      "track": "tooling",
+      "requires": ["start"],
+      "unlocks": ["lang-fundamentals"],
+      "devshop_stage": 0,
+      "deliverables": [
+        "Resolver bugs pequeños en una API existente sin IA, explicando causa raíz",
+        "Hacer un PR claro con descripción técnica útil",
+        "Reconstruir qué pasó leyendo logs y stack traces"
+      ]
+    },
+    {
+      "id": "lang-fundamentals",
+      "label": "Fundamentos del Lenguaje",
+      "description": "Tipos de datos y memoria. Closures y scope en JS, Python y Go. Call stack, heap. Cómo el runtime maneja variables, referencias y garbage collection. Lo que el runtime hace por vos sin que lo sepas.",
+      "tier": 0,
+      "track": "language-runtime",
+      "requires": ["git-debug"],
+      "unlocks": ["tdd-onboarding"],
+      "devshop_stage": 0,
+      "deliverables": [
+        "Explicar sin código qué es un closure y por qué existe",
+        "Mostrar la diferencia de scope entre JS, Python y Go en ejemplos cortos escritos a mano"
+      ]
+    },
+    {
+      "id": "tdd-onboarding",
+      "label": "TDD Onboarding",
+      "description": "Antes de todo lo demás: qué es Red-Green-Refactor, cómo correr tests en JS/TS, Python y Go, cómo escribir un test simple y cómo entregar evidencia. Sin esto no arranca ningún módulo.",
+      "tier": 1,
+      "track": "quality",
+      "requires": ["lang-fundamentals"],
+      "unlocks": ["typescript-node-nest", "go-fundamentals"],
+      "devshop_stage": 0,
+      "deliverables": [
+        "Escribir un test que falla (Red) antes de implementar cualquier cosa",
+        "Pasar ese test con la implementación mínima posible (Green)",
+        "Mostrar evidencia: output del Red y del Green"
+      ]
+    },
+    {
+      "id": "typescript-node-nest",
+      "label": "TypeScript / Node / NestJS",
+      "description": "TypeScript estricto: unknown vs any, generics, narrowing, utility types, decorators. Node.js: event loop, process lifecycle, streams básicos, ESM vs CJS. NestJS: módulos, providers, DI, guards, pipes, interceptors, filters, lifecycle hooks.",
+      "tier": 2,
+      "track": "stack",
+      "requires": ["tdd-onboarding"],
+      "unlocks": ["http-protocols", "error-handling", "tdd-foundations"],
+      "devshop_stage": 1,
+      "deliverables": [
+        "Crear una API NestJS desde cero sin copiar boilerplate",
+        "Validación con class-validator y errores consistentes",
+        "Estructura modular con DI real"
+      ]
+    },
+    {
+      "id": "go-fundamentals",
+      "label": "Go como Contraste",
+      "description": "Go no es un tercer stack completo — es un espejo. Sintaxis, structs, interfaces pequeñas, errores explícitos, módulos y tooling. Se usa en ejercicios cortos para contrastar con JS y Python: mismo problema, tres filosofías.",
+      "tier": 2,
+      "track": "go-contrast",
+      "requires": ["tdd-onboarding"],
+      "unlocks": ["error-handling", "async-concurrency"],
+      "devshop_stage": 0,
+      "deliverables": [
+        "Resolver el mismo ejercicio de manejo de errores en TS, Python y Go",
+        "Explicar qué diferencia la filosofía de errores de Go vs excepciones"
+      ]
+    },
+    {
+      "id": "tdd-foundations",
+      "label": "TDD Foundations",
+      "description": "Red-Green-Refactor en profundidad. Tests de comportamiento vs implementación. Outside-in TDD. Fixtures, factories, evitar overmocking. Contract tests. Table-driven tests en Go. Cuándo mockear y cuándo no.",
+      "tier": 2,
+      "track": "quality",
+      "requires": ["typescript-node-nest"],
+      "unlocks": ["db-basic", "testing-real"],
+      "devshop_stage": 1,
+      "deliverables": [
+        "Implementar una feature completa con outside-in TDD — test del contrato primero",
+        "Demostrar la diferencia entre testear comportamiento vs implementación"
+      ]
+    },
+    {
+      "id": "http-protocols",
+      "label": "HTTP y Fundamentos",
+      "description": "HTTP métodos, status codes, headers, cookies, caching, CORS, TLS básico, DNS básico. Request lifecycle completo. Idempotencia, content negotiation. Diferencia entre REST, RPC y cuándo usar cada uno.",
+      "tier": 2,
+      "track": "api",
+      "requires": ["typescript-node-nest"],
+      "unlocks": ["api-design", "authn-authz"],
+      "devshop_stage": 2,
+      "deliverables": [
+        "Explicar qué pasa desde que el browser hace una request hasta que llega a NestJS",
+        "Implementar CORS y caching correcto en una API"
+      ]
+    },
+    {
+      "id": "error-handling",
+      "label": "Manejo de Errores Real",
+      "description": "Errores de validación, dominio, infraestructura e inesperados: cuatro tipos distintos que se manejan diferente. Mapping a HTTP, exception filters en NestJS, wrapping en Go, stack traces, logging. Nunca filtrar info sensible en errores al cliente.",
+      "tier": 3,
+      "track": "quality",
+      "requires": ["typescript-node-nest", "go-fundamentals", "tdd-foundations"],
+      "unlocks": ["architecture"],
+      "devshop_stage": 1,
+      "deliverables": [
+        "Implementar una estrategia uniforme de errores en toda una API NestJS",
+        "El mismo caso de error en TS, Python y Go — analizar diferencias"
+      ]
+    },
+    {
+      "id": "db-basic",
+      "label": "SQL y Modelado de Datos",
+      "description": "PostgreSQL: tablas, relaciones, PK/FK, constraints, joins, agregaciones, migrations, seeds. Transacciones básicas. ORM vs query builder vs raw SQL. El dev tiene que entender qué ejecuta el ORM, no solo usarlo.",
+      "tier": 3,
+      "track": "data",
+      "requires": ["tdd-foundations"],
+      "unlocks": ["db-advanced", "async-concurrency"],
+      "devshop_stage": 3,
+      "deliverables": [
+        "Modelar una feature real con migraciones y constraints correctos",
+        "Escribir la misma query con ORM, query builder y SQL raw — explicar tradeoffs"
+      ]
+    },
+    {
+      "id": "api-design",
+      "label": "Diseño de APIs y Contratos",
+      "description": "REST pragmático, OpenAPI bien hecho, versionado, contratos request/response, paginación real, filtering, sorting, idempotency keys, error responses estándar. Diferencias con RPC y GraphQL. Breaking vs non-breaking changes.",
+      "tier": 3,
+      "track": "api",
+      "requires": ["http-protocols"],
+      "unlocks": ["authn-authz", "architecture"],
+      "devshop_stage": 2,
+      "deliverables": [
+        "Diseñar una API documentada con OpenAPI, errores estándar e idempotencia",
+        "Implementar paginación correcta (cursor vs offset) con criterio"
+      ]
+    },
+    {
+      "id": "async-concurrency",
+      "label": "Async y Concurrencia",
+      "description": "No son equivalentes: Event Loop (Node) vs asyncio/GIL (Python) vs goroutines/channels (Go). Tres modelos distintos de I/O y concurrencia. Promises, async/await, backpressure, cancelación, race conditions, context en Go.",
+      "tier": 3,
+      "track": "language-runtime",
+      "requires": ["go-fundamentals", "db-basic"],
+      "unlocks": ["background-jobs"],
+      "devshop_stage": 4,
+      "deliverables": [
+        "Implementar el mismo problema de concurrencia en Node, Python y Go",
+        "Explicar por qué el GIL de Python existe y cuándo importa"
+      ]
+    },
+    {
+      "id": "testing-real",
+      "label": "Testing Backend Real",
+      "description": "Unit, integration, E2E, contract testing. Mocks vs stubs vs spies — cuándo usar cada uno. Testcontainers para DB. Testing de auth, errores, queues. Tests útiles permiten refactorizar sin miedo. Coverage no es la métrica.",
+      "tier": 3,
+      "track": "quality",
+      "requires": ["tdd-foundations", "db-basic"],
+      "unlocks": ["architecture"],
+      "devshop_stage": 3,
+      "deliverables": [
+        "Suite de tests que permita refactorizar una feature sin romper nada",
+        "Test de integración con DB real usando Testcontainers"
+      ]
+    },
+    {
+      "id": "db-advanced",
+      "label": "DB: Performance y Consistencia",
+      "description": "Índices, EXPLAIN, N+1, isolation levels, locks, deadlocks, optimistic vs pessimistic locking, transaction boundaries reales. El dev tiene que responder: si creo una orden, descuento stock y genero un pago, qué debe ser transaccional?",
+      "tier": 4,
+      "track": "data",
+      "requires": ["db-basic"],
+      "unlocks": ["background-jobs", "performance"],
+      "devshop_stage": 3,
+      "deliverables": [
+        "Diagnosticar y corregir un N+1 con EXPLAIN",
+        "Diseñar transaction boundaries correctas en un caso real con múltiples recursos"
+      ]
+    },
+    {
+      "id": "authn-authz",
+      "label": "AuthN, AuthZ",
+      "description": "AuthN: sessions, JWT, refresh tokens, cookies, OAuth2, OIDC. AuthZ: RBAC, permisos por recurso, ownership checks. El error clásico: verificar role='admin' pero no verificar si el usuario puede acceder a ESE recurso específico.",
+      "tier": 4,
+      "track": "security",
+      "requires": ["http-protocols", "api-design"],
+      "unlocks": ["backend-security"],
+      "devshop_stage": 4,
+      "deliverables": [
+        "Implementar login, refresh tokens y autorización por recurso",
+        "Explicar JWT vs sessions: cuándo usar cada uno y por qué"
+      ]
+    },
+    {
+      "id": "backend-security",
+      "label": "Seguridad Backend",
+      "description": "OWASP Top 10 aplicado a backend: SQL injection, SSRF, XSS e impacto en tokens, CSRF, CORS. Password hashing (bcrypt/argon2), secrets management, rate limiting, dependency vulnerabilities, file upload seguro, input validation.",
+      "tier": 4,
+      "track": "security",
+      "requires": ["authn-authz"],
+      "unlocks": ["architecture"],
+      "devshop_stage": 4,
+      "deliverables": [
+        "Auditar una API existente contra OWASP Top 10 y documentar findings",
+        "Implementar protección contra los 3 vectores más comunes"
+      ]
+    },
+    {
+      "id": "background-jobs",
+      "label": "Background Jobs y Queues",
+      "description": "Queues, workers, retries, exponential backoff, dead letter queues, idempotencia, job deduplication, scheduling, graceful shutdown, poison messages. La pregunta clave: si el job se ejecuta dos veces, qué se rompe?",
+      "tier": 4,
+      "track": "production",
+      "requires": ["async-concurrency", "db-advanced"],
+      "unlocks": ["observability"],
+      "devshop_stage": 4,
+      "deliverables": [
+        "Worker con retries, idempotencia y dead letter queue",
+        "Demostrar que el job es seguro ante ejecución duplicada"
+      ]
+    },
+    {
+      "id": "architecture",
+      "label": "Arquitectura de Aplicación",
+      "description": "Separación de responsabilidades, boundaries, módulos, casos de uso, servicios de aplicación, capa de infraestructura, DTOs vs entidades de dominio, transaction boundaries, dependency inversion. Hexagonal cuando aporta, no como dogma. Cuándo simplificar.",
+      "tier": 5,
+      "track": "architecture",
+      "requires": ["testing-real", "error-handling", "backend-security", "api-design"],
+      "unlocks": ["devops-basic"],
+      "devshop_stage": 5,
+      "deliverables": [
+        "Refactorizar una API desordenada a estructura mantenible sin sobrearquitectura",
+        "Explicar por qué cada layer existe y qué problema resuelve"
+      ]
+    },
+    {
+      "id": "devops-basic",
+      "label": "DevOps Básico",
+      "description": "Docker, Docker Compose, multi-stage builds, env vars, secrets por ambiente, CI básico, migrations en deploy, health checks, readiness/liveness, rollback conceptual. Especialmente: qué pasa cuando una migración rompe producción.",
+      "tier": 5,
+      "track": "production",
+      "requires": ["architecture"],
+      "unlocks": ["observability"],
+      "devshop_stage": 5,
+      "deliverables": [
+        "Deployar la app con CI, Docker y migraciones automatizadas",
+        "Health checks funcionales que detectan estado real de la app"
+      ]
+    },
+    {
+      "id": "observability",
+      "label": "Observabilidad",
+      "description": "Structured logging, correlation/request IDs, log levels, error tracking, metrics básicas, traces, health checks, readiness/liveness, dashboards mínimos. Objetivo: reconstruir qué pasó en una request fallida usando solo logs y correlation ID.",
+      "tier": 5,
+      "track": "production",
+      "requires": ["devops-basic", "background-jobs"],
+      "unlocks": ["performance"],
+      "devshop_stage": 5,
+      "deliverables": [
+        "Dado un bug en prod, reconstruir qué pasó usando logs y correlation ID",
+        "Instrumentar un endpoint con logs estructurados y métricas básicas"
+      ]
+    },
+    {
+      "id": "performance",
+      "label": "Performance y Reliability",
+      "description": "Profiling, load testing, caching, Redis, cache invalidation, SQL EXPLAIN, N+1, memory leaks, backpressure, timeouts, retries, exponential backoff, circuit breakers, graceful shutdown. Sin observabilidad, performance es superstición.",
+      "tier": 6,
+      "track": "production",
+      "requires": ["observability", "db-advanced", "background-jobs"],
+      "unlocks": ["semisenior"],
+      "devshop_stage": 5,
+      "deliverables": [
+        "Diagnosticar y mejorar un endpoint lento con evidencia medida, no por intuición",
+        "Implementar caching con invalidación correcta y medir el impacto"
+      ]
+    },
+    {
+      "id": "semisenior",
+      "label": "Semi Senior Backend",
+      "description": "Diseñás, implementás, testeás, debuggeás y operás features backend de complejidad media. Trabajás sin depender de IA. Si usás IA, podés detectar cuando inventa, simplifica mal o introduce riesgos.",
+      "tier": 6,
+      "track": "base",
+      "requires": [
+        "git-debug", "lang-fundamentals", "tdd-onboarding",
+        "typescript-node-nest", "go-fundamentals", "tdd-foundations",
+        "http-protocols", "error-handling", "db-basic", "api-design",
+        "async-concurrency", "testing-real", "db-advanced", "authn-authz",
+        "backend-security", "background-jobs", "architecture",
+        "devops-basic", "observability", "performance"
+      ],
+      "unlocks": [],
+      "assessment": [
+        "Construir una API NestJS con PostgreSQL, auth, RBAC, tests, Docker y CI",
+        "Agregar un worker en Go con retries e idempotencia que procesa jobs de la API",
+        "Instrumentar logs estructurados, correlation IDs y health checks",
+        "Diagnosticar una query lenta con EXPLAIN y mejorarla con evidencia",
+        "Defender cada decisión técnica sin ayuda de IA"
+      ]
+    }
+  ]
+}

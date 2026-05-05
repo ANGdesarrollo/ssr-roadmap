@@ -1,0 +1,7 @@
+[
+  { "productId": "p1", "availableQty": 10, "reservedQty": 0 },
+  { "productId": "p2", "availableQty": 25, "reservedQty": 2 },
+  { "productId": "p3", "availableQty": 1,  "reservedQty": 0 },
+  { "productId": "p4", "availableQty": 50, "reservedQty": 0 },
+  { "productId": "p5", "availableQty": 0,  "reservedQty": 0 }
+]

@@ -1,0 +1,32 @@
+[
+  {
+    "name": "customer can read own order",
+    "input": { "actorRole": "customer", "actorId": "u1", "action": "read", "resource": "order", "resourceOwnerId": "u1" },
+    "expected": { "allowed": true }
+  },
+  {
+    "name": "customer cannot read another customer order",
+    "input": { "actorRole": "customer", "actorId": "u1", "action": "read", "resource": "order", "resourceOwnerId": "u2" },
+    "expected": { "allowed": false, "reason": "FORBIDDEN" }
+  },
+  {
+    "name": "support can read any order",
+    "input": { "actorRole": "support", "actorId": "u3", "action": "read", "resource": "order", "resourceOwnerId": "u1" },
+    "expected": { "allowed": true }
+  },
+  {
+    "name": "support cannot refund",
+    "input": { "actorRole": "support", "actorId": "u3", "action": "refund", "resource": "payment", "resourceOwnerId": "u1" },
+    "expected": { "allowed": false, "reason": "FORBIDDEN" }
+  },
+  {
+    "name": "admin can refund",
+    "input": { "actorRole": "admin", "actorId": "u4", "action": "refund", "resource": "payment", "resourceOwnerId": "u1" },
+    "expected": { "allowed": true }
+  },
+  {
+    "name": "unauthenticated cannot do anything",
+    "input": { "actorRole": null, "actorId": null, "action": "read", "resource": "order", "resourceOwnerId": "u1" },
+    "expected": { "allowed": false, "reason": "UNAUTHENTICATED" }
+  }
+]

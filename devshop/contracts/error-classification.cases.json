@@ -1,0 +1,27 @@
+[
+  {
+    "name": "invalid email is a validation error",
+    "input": { "type": "ValidationError", "message": "email must be valid" },
+    "expected": { "httpStatus": 400, "code": "VALIDATION_ERROR", "exposeMessage": true }
+  },
+  {
+    "name": "out of stock is a domain error",
+    "input": { "type": "DomainError", "message": "insufficient stock for product p1" },
+    "expected": { "httpStatus": 409, "code": "DOMAIN_ERROR", "exposeMessage": true }
+  },
+  {
+    "name": "payment provider timeout is infrastructure error",
+    "input": { "type": "InfrastructureError", "message": "stripe timeout after 5000ms" },
+    "expected": { "httpStatus": 503, "code": "INFRASTRUCTURE_ERROR", "exposeMessage": false }
+  },
+  {
+    "name": "null pointer is programmer error",
+    "input": { "type": "ProgrammerError", "message": "Cannot read property 'id' of undefined" },
+    "expected": { "httpStatus": 500, "code": "INTERNAL_ERROR", "exposeMessage": false }
+  },
+  {
+    "name": "unknown error maps to 500 without leaking details",
+    "input": { "type": "Unknown", "message": "something exploded" },
+    "expected": { "httpStatus": 500, "code": "INTERNAL_ERROR", "exposeMessage": false }
+  }
+]
