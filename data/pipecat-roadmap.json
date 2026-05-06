@@ -9,7 +9,7 @@
     {
       "id": "pc-start",
       "label": "Foundations",
-      "description": "Punto de partida. Entendés qué es Pipecat y por qué existe. Audio en tiempo real, WebRTC básico, y el modelo mental de un pipeline de frames.",
+      "description": "Entendés qué problema resuelve Pipecat: orquestar STT + LLM + TTS en tiempo real sin reinventar la rueda. La latencia percibida apunta a 500-800ms. Python 3.11+, instalación con extras (daily, deepgram, openai, cartesia, silero). El modelo mental: todo es un frame que fluye por processors.",
       "tier": 0,
       "track": "pc-base",
       "requires": [],
@@ -18,200 +18,187 @@
     },
     {
       "id": "pc-frames",
-      "label": "Frame Pipeline",
-      "description": "El corazón de Pipecat. AudioRawFrame, TextFrame, ImageRawFrame, EndFrame. Cómo los frames fluyen a través de processors. Push vs pull. Entender el DAG de tu pipeline.",
+      "label": "Frames & Processors",
+      "description": "El corazón de Pipecat. Tres tipos: SystemFrame (alta prioridad, nunca se cancela en interrupciones — InputAudioRawFrame, UserStartedSpeakingFrame), DataFrame (se encola en orden, se descarta en interrupciones — OutputAudioRawFrame, TextFrame, LLMTextFrame) y ControlFrame (igual que DataFrame — EndFrame, TTSStartedFrame). Los processors reciben frames, los procesan, y los pushean al siguiente. NUNCA los consumen: siempre los pasan.",
       "tier": 1,
       "track": "pc-core",
       "requires": ["pc-start"],
-      "unlocks": ["pc-stt", "pc-llm"],
+      "unlocks": ["pc-pipeline", "pc-vad"],
       "deliverables": [
-        "Construir un pipeline mínimo que recibe audio y loguea frames",
-        "Explicar qué pasa si un processor no hace push del frame al siguiente"
+        "Construir un FrameProcessor custom que loguea el tipo de cada frame que pasa",
+        "Explicar por qué InputAudioRawFrame es SystemFrame y OutputAudioRawFrame es DataFrame"
       ]
     },
     {
       "id": "pc-transport",
       "label": "Transports",
-      "description": "DailyTransport, WebsocketTransport, local transport para testing. Cómo Pipecat abstrae el canal de comunicación. VAD (Voice Activity Detection) y su rol en el pipeline.",
+      "description": "La capa de I/O. transport.input() va primero en el pipeline, transport.output() en el medio (no siempre al final — podés tener processors después). DailyTransport para producción (WebRTC global, echo cancellation, NAT traversal). SmallWebRTCTransport para desarrollo local (P2P directo). WebSocketTransport solo para server-to-server o texto. WebSocket usa TCP: head-of-line blocking y sin echo cancellation — nunca para audio browser-server.",
       "tier": 1,
       "track": "pc-infra",
       "requires": ["pc-start"],
-      "unlocks": ["pc-stt", "pc-webrtc"],
+      "unlocks": ["pc-pipeline"],
       "deliverables": [
-        "Conectar un DailyTransport y recibir audio de un participante real",
-        "Usar LocalAudioTransport para testear un pipeline offline"
+        "Armar un bot con DailyTransport, crear room via API, joinear con bot",
+        "Explicar por qué WebSocket es una mala idea para audio browser-to-server"
+      ]
+    },
+    {
+      "id": "pc-pipeline",
+      "label": "Pipeline & PipelineTask",
+      "description": "Pipeline conecta processors en secuencia. Internamente agrega un PipelineSource y PipelineSink. PipelineTask lo ejecuta: envía el StartFrame inicial, maneja errores, heartbeat monitoring. PipelineRunner es el entry point de alto nivel (maneja SIGINT/SIGTERM para graceful shutdown). ParallelPipeline permite branches independientes donde cada branch recibe todos los frames upstream — útil con FunctionFilter para lógica condicional.",
+      "tier": 2,
+      "track": "pc-core",
+      "requires": ["pc-frames", "pc-transport"],
+      "unlocks": ["pc-stt", "pc-llm-service"],
+      "deliverables": [
+        "Pipeline mínimo funcional: transport.input() → stt → llm → tts → transport.output()",
+        "Usar PipelineRunner con graceful shutdown ante SIGTERM"
+      ]
+    },
+    {
+      "id": "pc-vad",
+      "label": "VAD — Voice Activity Detection",
+      "description": "Silero VAD corre localmente en CPU, procesa chunks de 30+ms en menos de 1ms. VADParams: confidence (default 0.7), start_secs (default 0.2 — tiempo para confirmar que hay voz), stop_secs (default 0.2 — crítico para turn-taking: silencio requerido antes de terminar el turno), min_volume (default 0.6). Cambiás stop_secs → cambia el TTFS medido: re-benchmarkeá con stt-benchmark. VADProcessor emite: VADUserStartedSpeakingFrame, VADUserStoppedSpeakingFrame, UserSpeakingFrame (periódico).",
+      "tier": 2,
+      "track": "pc-infra",
+      "requires": ["pc-frames"],
+      "unlocks": ["pc-turn-detection"],
+      "deliverables": [
+        "Tunear VADParams para un entorno ruidoso sin cortar palabras",
+        "Medir el impacto de cambiar stop_secs de 0.2 a 0.6 en latencia percibida"
       ]
     },
     {
       "id": "pc-stt",
       "label": "STT — Speech to Text",
-      "description": "Deepgram, Whisper, Azure. Cómo integrar un STT processor. Streaming vs batch. Interim results y final transcripts. Latencia: el STT es el primer cuello de botella.",
-      "tier": 2,
-      "track": "pc-ai",
-      "requires": ["pc-frames", "pc-transport"],
-      "unlocks": ["pc-llm-pipeline"],
-      "deliverables": [
-        "Pipeline que transcribe audio en tiempo real con Deepgram",
-        "Medir y comparar latencia de tres STT providers"
-      ]
-    },
-    {
-      "id": "pc-llm",
-      "label": "LLM Integration",
-      "description": "OpenAI, Anthropic, Gemini processors. Context management, system prompts, streaming completions. Cómo los LLMMessagesFrame fluyen. Token budget y sus implicaciones en latencia.",
-      "tier": 2,
-      "track": "pc-ai",
-      "requires": ["pc-frames"],
-      "unlocks": ["pc-llm-pipeline", "pc-function-calling"],
-      "deliverables": [
-        "Integrar Claude o GPT-4 en un pipeline y manejar streaming correctamente",
-        "Context window management: qué pasa cuando se llena"
-      ]
-    },
-    {
-      "id": "pc-webrtc",
-      "label": "WebRTC y Daily",
-      "description": "Cómo funciona WebRTC por dentro: ICE, STUN/TURN, SDP negotiation básico. Daily como abstracción. Room lifecycle, participant events, media tracks. Lo mínimo para operar en producción.",
-      "tier": 2,
-      "track": "pc-infra",
-      "requires": ["pc-transport"],
-      "unlocks": ["pc-interruptions", "pc-multi-participant"],
-      "deliverables": [
-        "Crear y destruir rooms programáticamente",
-        "Manejar reconnects y participant leave/join events"
-      ]
-    },
-    {
-      "id": "pc-llm-pipeline",
-      "label": "STT → LLM → TTS Pipeline",
-      "description": "El pipeline completo de voz. Componer STT + LLM + TTS con latencia mínima. Turn management, el momento exacto en que el bot debe hablar. UserStoppedSpeakingFrame y sus implicaciones.",
+      "description": "60+ integraciones. Deepgram, Whisper, Azure. El STT recibe InputAudioRawFrame y emite TranscriptionFrame. STTMetadataFrame broadcast al inicio: informa ttfs_p99_latency a downstream processors (especialmente turn strategies). El STT es el primer cuello de botella de latencia. Interim results vs final transcripts: los finales son los que el context_aggregator usa. Benchmarkeá tu provider con stt-benchmark.",
       "tier": 3,
-      "track": "pc-core",
-      "requires": ["pc-stt", "pc-llm"],
-      "unlocks": ["pc-tts", "pc-interruptions"],
+      "track": "pc-ai",
+      "requires": ["pc-pipeline"],
+      "unlocks": ["pc-context"],
       "deliverables": [
-        "Bot de voz conversacional end-to-end con latencia < 1.5s percibida",
-        "Medir cada segmento del pipeline y encontrar el cuello de botella"
+        "Medir TTFB del STT con Deepgram: tiempo desde fin de speech hasta TranscriptionFrame",
+        "Comparar latencia P99 de Deepgram vs Whisper local"
+      ]
+    },
+    {
+      "id": "pc-llm-service",
+      "label": "LLM Service",
+      "description": "LLM recibe LLMContextFrame, streamea LLMTextFrame uno por uno, termina con LLMFullResponseEndFrame. BaseOpenAILLMService es la base de la mayoría — cambiás base_url para usar cualquier provider compatible. Anthropic, Gemini, AWS Bedrock también soportados. Speech-to-speech directo (OpenAI Realtime, Gemini Live) para menor latencia. El streaming es clave: TTS puede empezar a hablar antes de que el LLM termine.",
+      "tier": 3,
+      "track": "pc-ai",
+      "requires": ["pc-pipeline"],
+      "unlocks": ["pc-context"],
+      "deliverables": [
+        "Swap de OpenAI a Anthropic sin cambiar el pipeline (solo el service)",
+        "Observar y medir el tiempo hasta el primer LLMTextFrame (TTFT)"
+      ]
+    },
+    {
+      "id": "pc-context",
+      "label": "Context Management",
+      "description": "LLMContext almacena mensajes en formato OpenAI-compatible. Todos los LLM services hacen traducción just-in-time desde este formato universal. context_aggregator.user() recibe TranscriptionFrame y agrega mensaje 'user'. context_aggregator.assistant() recibe TTSTextFrame (lo que realmente se habló) y agrega mensaje 'assistant'. Auto-summarization: se activa por token limit (default 8000) o message count (default 20). Reconstruye: [system] + [summary] + [recent_messages].",
+      "tier": 4,
+      "track": "pc-core",
+      "requires": ["pc-stt", "pc-llm-service"],
+      "unlocks": ["pc-tts", "pc-function-calling"],
+      "deliverables": [
+        "Loguear el contexto completo después de cada turn para ver cómo crece",
+        "Configurar auto-summarization y verificar que se activa correctamente"
       ]
     },
     {
       "id": "pc-tts",
       "label": "TTS — Text to Speech",
-      "description": "ElevenLabs, Cartesia, Azure TTS, OpenAI TTS. Streaming TTS vs batch. Cómo el bot habla sin esperar a que el LLM termine. Voice cloning básico. El rol del TTSStoppedSpeakingFrame.",
-      "tier": 3,
+      "description": "TTS recibe LLMTextFrame, emite TTSAudioRawFrame (para audio) y TTSTextFrame (para el context aggregator). ElevenLabs, Cartesia, Azure, OpenAI. El streaming TTS es crítico: el bot empieza a hablar con las primeras palabras del LLM, no cuando termina la respuesta completa. TTSStartedFrame y TTSSpeakFrame para control. TTSSpeakFrame + EndFrame se procesan en orden garantizado — podés hacer 'decí adiós y terminá el pipeline'.",
+      "tier": 4,
       "track": "pc-ai",
-      "requires": ["pc-llm-pipeline"],
-      "unlocks": ["pc-vad-tuning", "pc-multi-participant"],
+      "requires": ["pc-context"],
+      "unlocks": ["pc-turn-detection"],
       "deliverables": [
-        "Implementar TTS con streaming para que el bot empiece a hablar lo antes posible",
-        "Comparar calidad y latencia de ElevenLabs vs Cartesia"
+        "Medir latencia desde LLMTextFrame#1 hasta primer byte de audio de TTS",
+        "Comparar ElevenLabs streaming vs Cartesia en latencia percibida"
+      ]
+    },
+    {
+      "id": "pc-turn-detection",
+      "label": "Turn Detection & Interruptions",
+      "description": "VAD detecta speech/silence. Turn strategies interpretan eso para decidir cuándo el usuario realmente terminó. Smart Turn (default): modelo AI que analiza si el usuario terminó su thought. SpeechTimeoutUserTurnStopStrategy: espera silencio post-transcription. Interruptions: cuando el usuario habla mientras el bot habla → InterruptionFrame → DataFrames y ControlFrames pendientes se descartan → SystemFrames sobreviven. enable_interruptions=True por default. Mute strategies: AlwaysUserMuteStrategy, FunctionCallUserMuteStrategy.",
+      "tier": 4,
+      "track": "pc-core",
+      "requires": ["pc-vad", "pc-tts"],
+      "unlocks": ["pc-function-calling", "pc-observers"],
+      "deliverables": [
+        "Implementar interrupción limpia y verificar que DataFrames pendientes se descartan",
+        "Comparar Smart Turn vs SpeechTimeout en latencia de respuesta del bot"
       ]
     },
     {
       "id": "pc-function-calling",
       "label": "Function Calling",
-      "description": "Darle herramientas al LLM. FunctionCallResultFrame, cómo el LLM decide cuándo llamar una función, manejo de errores en tools, parallel function calls. Integrar APIs externas en el flujo conversacional.",
-      "tier": 3,
+      "description": "FunctionSchema define la firma. ToolsSchema agrupa las tools. LLMContext recibe las tools. El LLM decide cuándo llamar. FunctionCallParams da acceso a: function_name, arguments, llm service, context, result_callback. Siempre llamar result_callback al final. cancel_on_interruption=True (default): se cancela si el usuario interrumpe. cancel_on_interruption=False: async tool — el LLM continúa sin esperar el resultado. FunctionCallUserMuteStrategy para mutear al usuario durante function calls largas.",
+      "tier": 5,
       "track": "pc-ai",
-      "requires": ["pc-llm"],
-      "unlocks": ["pc-state-management"],
+      "requires": ["pc-context", "pc-turn-detection"],
+      "unlocks": ["pc-flows", "pc-production"],
       "deliverables": [
-        "Bot que puede consultar una API externa mid-conversation",
-        "Manejar function call failures sin romper el flujo"
+        "Bot que consulta una API externa (clima, base de datos) mid-conversation",
+        "Implementar un async tool (cancel_on_interruption=False) con update intermedio"
       ]
     },
     {
-      "id": "pc-interruptions",
-      "label": "Interrupciones y Turn Taking",
-      "description": "El problema más difícil en voice AI: el usuario habla mientras el bot habla. BotSpeakingFrame, UserStartedSpeakingFrame, cómo cancelar TTS sin artefactos. El tradeoff entre agresividad y naturalidad.",
-      "tier": 4,
-      "track": "pc-core",
-      "requires": ["pc-llm-pipeline", "pc-webrtc"],
-      "unlocks": ["pc-vad-tuning"],
-      "deliverables": [
-        "Implementar interrupción limpia sin audio glitches",
-        "Tunear el comportamiento según UX (agresivo vs conservador)"
-      ]
-    },
-    {
-      "id": "pc-vad-tuning",
-      "label": "VAD y Audio Processing",
-      "description": "Voice Activity Detection con Silero. Parámetros: start_secs, stop_secs, confidence. Noise reduction, echo cancellation. Por qué el VAD mal tuneado arruina toda la UX. Audio normalization.",
-      "tier": 4,
-      "track": "pc-infra",
-      "requires": ["pc-tts", "pc-interruptions"],
-      "unlocks": ["pc-state-management"],
-      "deliverables": [
-        "Diagnosticar y corregir un VAD que corta palabras",
-        "Pipeline que funciona bien en entornos ruidosos"
-      ]
-    },
-    {
-      "id": "pc-multi-participant",
-      "label": "Multi-Participant",
-      "description": "Más de dos personas en una room. Identificar quién habló, coordinar turnos entre participantes, track individual por speaker. ParticipantUpdatedFrame. Casos de uso: entrevistas, grupos, asistentes en reuniones.",
-      "tier": 4,
-      "track": "pc-infra",
-      "requires": ["pc-tts", "pc-webrtc"],
-      "unlocks": ["pc-state-management"],
-      "deliverables": [
-        "Bot que identifica y responde a múltiples speakers en una room",
-        "Manejo correcto de participantes que se van y vuelven"
-      ]
-    },
-    {
-      "id": "pc-state-management",
-      "label": "State y Context",
-      "description": "Cómo persistir estado a través de turns. Conversation memory, session state, user context. Cuándo usar el context del LLM vs estado externo. Redis para sesiones largas. Idempotencia en pipelines.",
-      "tier": 5,
-      "track": "pc-core",
-      "requires": ["pc-function-calling", "pc-vad-tuning", "pc-multi-participant"],
-      "unlocks": ["pc-observability"],
-      "deliverables": [
-        "Bot que recuerda contexto a lo largo de una conversación de 20 minutos",
-        "Session recovery si la conexión se cae"
-      ]
-    },
-    {
-      "id": "pc-observability",
-      "label": "Observabilidad y Latencia",
-      "description": "Métricas de pipeline: TTFB por stage, frame throughput, error rates. Structured logging en pipelines async. Tracing de un frame de inicio a fin. Detectar stalls. La latencia percibida ≠ latencia real.",
+      "id": "pc-observers",
+      "label": "Observers & Transcripts",
+      "description": "Observers monitorean el flujo de frames SIN modificar el pipeline. Se pasan a PipelineTask via el parámetro observers. TurnTrackingObserver (activo por default): emite on_turn_started y on_turn_ended con duración y was_interrupted. Para transcripts: on_user_turn_stopped y on_assistant_turn_stopped en los context aggregators. Datos: timestamp, content, interrupted. Útil para analytics, debugging y guardar conversaciones.",
       "tier": 5,
       "track": "pc-infra",
-      "requires": ["pc-state-management"],
+      "requires": ["pc-turn-detection"],
       "unlocks": ["pc-production"],
       "deliverables": [
-        "Dashboard con TTFB desglosado por STT, LLM first-token y TTS first-audio",
-        "Alert que detecta cuando un pipeline se colgó"
+        "Guardar transcripción completa de una conversación con timestamps",
+        "Medir duración promedio de turns y tasa de interrupciones con TurnTrackingObserver"
+      ]
+    },
+    {
+      "id": "pc-flows",
+      "label": "Pipecat Flows",
+      "description": "Conversaciones estructuradas con nodos y transiciones. Cada nodo tiene task_messages (qué hace el LLM) y functions (qué puede llamar). Las functions tienen handlers que procesan datos Y retornan el siguiente nodo. FlowsFunctionSchema o Direct Functions (firma + docstring auto-generan el schema). Útil para intake forms, entrevistas, onboarding — cualquier flujo con estados definidos donde querés controlar el progreso de la conversación.",
+      "tier": 5,
+      "track": "pc-core",
+      "requires": ["pc-function-calling"],
+      "unlocks": ["pc-production"],
+      "deliverables": [
+        "Bot de intake con 3 nodos: saludo → recolección de datos → confirmación",
+        "Manejo correcto de función que no transiciona de nodo (retorna None como next_node)"
       ]
     },
     {
       "id": "pc-production",
-      "label": "Production & Scaling",
-      "description": "Deploy de bots Pipecat en producción. Lifecycle management, graceful shutdown, resource limits. Multiple concurrent sessions. Cost estimation por llamada. Monitoring y alerting. Docker + scaling horizontal.",
+      "label": "Production & Pipecat Cloud",
+      "description": "Pipecat Cloud: pipecat cloud deploy, auto-scaling de 0 a miles de sesiones. Scaling: min_agents (warm instances), max_agents (hard cap, devuelve 429 cuando se llena). Idle agents se crean automáticamente al haber sessions activas (~30s para estar disponibles). Agent profiles: agent-1x (0.5 vCPU, 1GB), agent-2x, agent-3x. Self-hosted: Docker, Python server, WebRTC (SmallWebRTC o Daily). Silero VAD se pre-descarga en el Dockerfile. Graceful shutdown con PipelineRunner ante SIGINT/SIGTERM.",
       "tier": 6,
       "track": "pc-infra",
-      "requires": ["pc-observability"],
+      "requires": ["pc-function-calling", "pc-observers", "pc-flows"],
       "unlocks": ["pc-expert"],
       "deliverables": [
-        "Deploys sin downtime con sesiones activas",
-        "Estimación y optimización de costos por conversación"
+        "Deploy en Pipecat Cloud con min_agents=1 y verificar cold starts",
+        "Calcular Optimal Reserved = MAX(baseline, CPS × 30s) para un caso real"
       ]
     },
     {
       "id": "pc-expert",
       "label": "Voice AI Engineer",
-      "description": "Diseñás, implementás y operás pipelines de voz conversacional en producción. Sabés diagnosticar latencia, tunear VAD, manejar interrupciones, y estimar costos. Podés construir un agente de voz completo sin mirar la doc.",
+      "description": "Diseñás, implementás y operás pipelines de voz conversacional en producción. Sabés qué tipo de frame usar en cada caso, cómo funciona el turn detection por dentro, cuándo una interrupción descarta frames, y cómo escalar en Pipecat Cloud. Podés construir un agente de voz completo sin mirar la doc.",
       "tier": 6,
       "track": "pc-base",
       "requires": ["pc-production"],
       "unlocks": [],
       "assessment": [
-        "Construir un agente de voz completo: STT + LLM + TTS + function calling",
-        "Latencia percibida < 1s en condiciones normales",
-        "Interrupciones limpias sin artefactos de audio",
-        "Dashboard con métricas de latencia por stage",
-        "Deploy en producción con al menos 10 sesiones concurrentes"
+        "Pipeline completo: DailyTransport + Deepgram STT + Claude/GPT + ElevenLabs TTS + function calling",
+        "Interrupciones limpias sin artefactos: DataFrames descartados, SystemFrames preservados",
+        "Smart Turn configurado y tuneado: sin cortar al usuario, sin esperar de más",
+        "TurnTrackingObserver con métricas: turn duration, interruption rate, TTFT",
+        "Deploy en producción con capacidad planning correcto (formula Optimal Reserved)"
       ]
     }
   ]
