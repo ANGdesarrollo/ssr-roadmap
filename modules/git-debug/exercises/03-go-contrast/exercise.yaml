@@ -1,8 +1,0 @@
-id: 03-go-contrast
-title: "Stack Trace Parser"
-module: git-debug
-lang: Go
-level: Intermedio
-concept: "Parseo de stack traces — errores explícitos, structs, strings.Fields, Go idiomático"
-time: 60min
-tdd: required

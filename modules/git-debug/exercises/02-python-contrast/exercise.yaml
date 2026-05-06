@@ -1,8 +1,0 @@
-id: 02-python-contrast
-title: "Commit Message Analyzer"
-module: git-debug
-lang: Python
-level: Básico+
-concept: "Mismo parseo de historial, idiomático Python — dataclasses, comprensiones, pathlib"
-time: 45min
-tdd: required

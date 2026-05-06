@@ -1,8 +1,0 @@
-id: 01-js-basic
-title: "Git History Parser"
-module: git-debug
-lang: JS/TS
-level: Básico
-concept: "Parseo de output de herramientas CLI — leer y transformar datos estructurados de texto plano"
-time: 45min
-tdd: required
