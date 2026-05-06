@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Skill Tree — Backend Journey</title>
+  <title>Skill Tree</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
@@ -18,6 +18,7 @@
       --text:          #8aa0bc;
       --text-bright:   #c8dcf0;
 
+      /* Backend tracks */
       --c-base:        #00e676;
       --c-tooling:     #ffd740;
       --c-language:    #40c4ff;
@@ -30,8 +31,17 @@
       --c-prod:        #ffab40;
       --c-go:          #00acc1;
 
+      /* Pipecat tracks */
+      --c-pc-base:     #f97316;
+      --c-pc-core:     #fb923c;
+      --c-pc-ai:       #a78bfa;
+      --c-pc-infra:    #34d399;
+
       --locked-bg:     #0c1220;
       --locked-border: #1a2840;
+
+      --tab-active-backend: #7c4dff;
+      --tab-active-pipecat: #f97316;
     }
 
     html, body { width:100%; height:100%; background:var(--bg); color:var(--text); font-family:'Rajdhani',sans-serif; overflow:hidden; }
@@ -63,6 +73,11 @@
       font-size:10px; letter-spacing:.15em; text-transform:uppercase;
       padding:3px 10px; border:1px solid rgba(228,64,251,.3);
       color:#e040fb; border-radius:1px; opacity:.7;
+      transition: opacity .3s, border-color .3s, color .3s;
+    }
+    body.pipecat-mode #tdd-badge {
+      border-color: rgba(249,115,22,.3);
+      color: #f97316;
     }
 
     #stats { display:flex; gap:28px; align-items:center; }
@@ -73,10 +88,50 @@
     #progress-wrap { display:flex; flex-direction:column; gap:4px; width:180px; }
     #progress-bg { height:3px; background:var(--border); border-radius:2px; overflow:hidden; }
     #progress-fill { height:100%; background:linear-gradient(90deg,#7c4dff,#00e676); border-radius:2px; transition:width .6s cubic-bezier(.4,0,.2,1); }
+    body.pipecat-mode #progress-fill { background:linear-gradient(90deg,#a78bfa,#f97316); }
     #progress-pct { font-size:10px; letter-spacing:.12em; text-transform:uppercase; opacity:.4; text-align:right; }
 
+    /* ── TABS ── */
+    #tabs {
+      position:fixed; top:60px; left:0; right:0; z-index:190;
+      display:flex; align-items:stretch; height:40px;
+      background:rgba(7,10,16,.95);
+      border-bottom:1px solid rgba(26,40,64,.8);
+    }
+
+    .tab {
+      display:flex; align-items:center; gap:8px;
+      padding:0 24px; cursor:pointer;
+      font-size:11px; font-weight:700; letter-spacing:.18em; text-transform:uppercase;
+      color:var(--text); opacity:.45;
+      border-bottom:2px solid transparent;
+      transition: opacity .2s, border-color .2s, color .2s;
+      user-select:none;
+    }
+    .tab:hover { opacity:.7; }
+    .tab.active { opacity:1; }
+    .tab[data-tab="backend"].active {
+      color:#7c4dff;
+      border-bottom-color:#7c4dff;
+    }
+    .tab[data-tab="pipecat"].active {
+      color:#f97316;
+      border-bottom-color:#f97316;
+    }
+
+    .tab-pip {
+      width:6px; height:6px; border-radius:50%;
+      flex-shrink:0;
+    }
+    .tab[data-tab="backend"] .tab-pip { background:#7c4dff; }
+    .tab[data-tab="pipecat"] .tab-pip { background:#f97316; }
+
+    .tab-divider {
+      width:1px; background:var(--border); margin:10px 0;
+    }
+
     /* ── CANVAS ── */
-    #canvas-wrap { position:fixed; inset:0; overflow:hidden; cursor:grab; }
+    #canvas-wrap { position:fixed; inset:0; top:100px; overflow:hidden; cursor:grab; }
     #canvas-wrap.grabbing { cursor:grabbing; }
     #canvas { position:absolute; transform-origin:0 0; }
     svg#connections { position:absolute; top:0; left:0; pointer-events:none; }
@@ -240,7 +295,7 @@
 
 <header id="header">
   <div id="header-left">
-    <div id="header-title">⟨ Backend Skill Tree ⟩</div>
+    <div id="header-title">⟨ Skill Tree ⟩</div>
     <div id="tdd-badge">TDD Mode</div>
   </div>
   <div id="stats">
@@ -253,6 +308,18 @@
     </div>
   </div>
 </header>
+
+<div id="tabs">
+  <div class="tab active" data-tab="backend">
+    <span class="tab-pip"></span>
+    Backend
+  </div>
+  <div class="tab-divider"></div>
+  <div class="tab" data-tab="pipecat">
+    <span class="tab-pip"></span>
+    Pipecat
+  </div>
+</div>
 
 <div id="canvas-wrap">
   <div id="canvas">
@@ -302,74 +369,91 @@
   <div class="leg"><span class="leg-dot completed"></span>Completado</div>
 </div>
 
-<div id="tracks">
-  <div class="track-item"><span class="track-pip" style="background:var(--c-base)"></span>Base</div>
-  <div class="track-item"><span class="track-pip" style="background:var(--c-tooling)"></span>Tooling</div>
-  <div class="track-item"><span class="track-pip" style="background:var(--c-language)"></span>Language/Runtime</div>
-  <div class="track-item"><span class="track-pip" style="background:var(--c-stack)"></span>Stack Principal</div>
-  <div class="track-item"><span class="track-pip" style="background:var(--c-api)"></span>API</div>
-  <div class="track-item"><span class="track-pip" style="background:var(--c-quality)"></span>Quality/Testing</div>
-  <div class="track-item"><span class="track-pip" style="background:var(--c-data)"></span>Data</div>
-  <div class="track-item"><span class="track-pip" style="background:var(--c-security)"></span>Security</div>
-  <div class="track-item"><span class="track-pip" style="background:var(--c-arch)"></span>Architecture</div>
-  <div class="track-item"><span class="track-pip" style="background:var(--c-prod)"></span>Production</div>
-  <div class="track-item"><span class="track-pip" style="background:var(--c-go)"></span>Go Contrast</div>
-</div>
-
 <div id="toast"></div>
 
 <script>
 // ── TRACK CONFIG ──
 const TRACK_COLOR = {
-  base:             '#00e676',
-  tooling:          '#ffd740',
+  // Backend
+  base:              '#00e676',
+  tooling:           '#ffd740',
   'language-runtime':'#40c4ff',
-  stack:            '#7c4dff',
-  api:              '#ff6d00',
-  quality:          '#e040fb',
-  data:             '#00bcd4',
-  security:         '#ff5252',
-  architecture:     '#69f0ae',
-  production:       '#ffab40',
-  'go-contrast':    '#00acc1',
+  stack:             '#7c4dff',
+  api:               '#ff6d00',
+  quality:           '#e040fb',
+  data:              '#00bcd4',
+  security:          '#ff5252',
+  architecture:      '#69f0ae',
+  production:        '#ffab40',
+  'go-contrast':     '#00acc1',
+  // Pipecat
+  'pc-base':         '#f97316',
+  'pc-core':         '#fb923c',
+  'pc-ai':           '#a78bfa',
+  'pc-infra':        '#34d399',
 };
 
 const TRACK_NAME = {
-  base:             'Base',
-  tooling:          'Tooling',
+  // Backend
+  base:              'Base',
+  tooling:           'Tooling',
   'language-runtime':'Language / Runtime',
-  stack:            'Stack Principal',
-  api:              'API',
-  quality:          'Quality / Testing',
-  data:             'Data',
-  security:         'Security',
-  architecture:     'Architecture',
-  production:       'Production',
-  'go-contrast':    'Go Contrast',
+  stack:             'Stack Principal',
+  api:               'API',
+  quality:           'Quality / Testing',
+  data:              'Data',
+  security:          'Security',
+  architecture:      'Architecture',
+  production:        'Production',
+  'go-contrast':     'Go Contrast',
+  // Pipecat
+  'pc-base':         'Foundation',
+  'pc-core':         'Core Pipeline',
+  'pc-ai':           'AI / Models',
+  'pc-infra':        'Infrastructure',
 };
 
 const ICONS = {
-  start:              '🌱',
-  'git-debug':        '🔧',
-  'lang-fundamentals':'⚙️',
+  // Backend
+  start:               '🌱',
+  'git-debug':         '🔧',
+  'lang-fundamentals': '⚙️',
+  'tdd-onboarding':    '🔴',
   'typescript-node-nest':'💜',
-  'go-fundamentals':  '🐹',
-  'http-protocols':   '🌐',
-  'tdd-foundations':  '🔴',
-  'error-handling':   '🛡️',
-  'db-basic':         '🗄️',
-  'api-design':       '📐',
-  'async-concurrency':'⚡',
-  'testing-real':     '🧪',
-  'db-advanced':      '📊',
-  'authn-authz':      '🔐',
-  'backend-security': '🔒',
-  'background-jobs':  '⚙️',
-  architecture:       '🏛️',
-  'devops-basic':     '🐳',
-  observability:      '📡',
-  performance:        '🚀',
-  semisenior:         '⭐',
+  'go-fundamentals':   '🐹',
+  'tdd-foundations':   '🧪',
+  'http-protocols':    '🌐',
+  'error-handling':    '🛡️',
+  'db-basic':          '🗄️',
+  'api-design':        '📐',
+  'async-concurrency': '⚡',
+  'testing-real':      '🧪',
+  'db-advanced':       '📊',
+  'authn-authz':       '🔐',
+  'backend-security':  '🔒',
+  'background-jobs':   '⚙️',
+  architecture:        '🏛️',
+  'devops-basic':      '🐳',
+  observability:       '📡',
+  performance:         '🚀',
+  semisenior:          '⭐',
+  // Pipecat
+  'pc-start':              '🎙️',
+  'pc-frames':             '🔲',
+  'pc-transport':          '📡',
+  'pc-stt':                '👂',
+  'pc-llm':                '🧠',
+  'pc-webrtc':             '🌐',
+  'pc-llm-pipeline':       '⚡',
+  'pc-tts':                '🔊',
+  'pc-function-calling':   '🔧',
+  'pc-interruptions':      '🛑',
+  'pc-vad-tuning':         '🎚️',
+  'pc-multi-participant':  '👥',
+  'pc-state-management':   '💾',
+  'pc-observability':      '📊',
+  'pc-production':         '🚀',
+  'pc-expert':             '⭐',
 };
 
 const STATUS_LABEL = {
@@ -389,83 +473,86 @@ const BTN_LABEL = {
 // ── LAYOUT ──
 const CW = 1800, CH = 1800;
 const MARGIN_X = 160, MARGIN_Y = 120;
-
-// Tier Y positions (0 at bottom, 5 at top)
 const TIER_Y = tier => CH - MARGIN_Y - tier * 260;
 
-// Manual X positions by node (fraction 0..1)
-const NODE_X = {
-  // Tier 0
+const NODE_X_BACKEND = {
   start:                 0.50,
-  // Tier 0
   'git-debug':           0.30,
   'lang-fundamentals':   0.70,
-  // Tier 1
   'tdd-onboarding':      0.50,
-  // Tier 2
   'typescript-node-nest':0.30,
   'go-fundamentals':     0.70,
-  // Tier 2 (but depends on typescript-node-nest)
   'tdd-foundations':     0.16,
   'http-protocols':      0.50,
-  // Tier 3
   'error-handling':      0.22,
   'db-basic':            0.40,
   'api-design':          0.60,
   'async-concurrency':   0.78,
-  // Tier 3 (testing)
   'testing-real':        0.12,
-  // Tier 4
   'db-advanced':         0.32,
   'authn-authz':         0.50,
   'backend-security':    0.68,
   'background-jobs':     0.82,
-  // Tier 5
   architecture:          0.25,
   'devops-basic':        0.45,
   observability:         0.65,
-  // Tier 6
   performance:           0.50,
   semisenior:            0.50,
 };
 
-// Node sizes
-const NODE_SIZE = id => (id === 'start' || id === 'semisenior') ? 100 : 78;
+const NODE_X_PIPECAT = {
+  'pc-start':             0.50,
+  'pc-frames':            0.30,
+  'pc-transport':         0.70,
+  'pc-stt':               0.28,
+  'pc-llm':               0.72,
+  'pc-webrtc':            0.85,
+  'pc-llm-pipeline':      0.35,
+  'pc-tts':               0.35,
+  'pc-function-calling':  0.72,
+  'pc-interruptions':     0.22,
+  'pc-vad-tuning':        0.42,
+  'pc-multi-participant': 0.65,
+  'pc-state-management':  0.50,
+  'pc-observability':     0.50,
+  'pc-production':        0.50,
+  'pc-expert':            0.50,
+};
+
+const NODE_SIZE = id => (id === 'start' || id === 'semisenior' || id === 'pc-start' || id === 'pc-expert') ? 100 : 78;
 
 // ── STATE ──
-let roadmap = null;
-let nodeMap = {};
+let currentTab = 'backend';
+let roadmaps = { backend: null, pipecat: null };
+let nodeMaps = { backend: {}, pipecat: {} };
 let selectedId = null;
 let scale = 1, offsetX = 0, offsetY = 0;
 let dragging = false, dragStart = { x:0, y:0 };
 
-const wrap    = document.getElementById('canvas-wrap');
-const canvas  = document.getElementById('canvas');
-const svg     = document.getElementById('connections');
+const wrap   = document.getElementById('canvas-wrap');
+const canvas = document.getElementById('canvas');
+const svg    = document.getElementById('connections');
 
-// ── DERIVED STATUS ──
-function computeStatus(node) {
-  // If manually completed, keep it
+// ── STATUS ──
+function computeStatus(node, nMap) {
   if (node._completed) return 'completed';
-  // If manually in progress, keep it unless somehow locked
   if (node._in_progress) {
-    const allReqsDone = (node.requires||[]).every(r => nodeMap[r]?._completed);
+    const allReqsDone = (node.requires||[]).every(r => nMap[r]?._completed);
     return allReqsDone ? 'in_progress' : 'locked';
   }
-  // Available if all requires completed
-  if ((node.requires||[]).every(r => nodeMap[r]?._completed)) return 'available';
+  if ((node.requires||[]).every(r => nMap[r]?._completed)) return 'available';
   return 'locked';
 }
 
-function recomputeAllStatuses() {
-  // Topological: multiple passes until stable
-  let changed = true;
-  let passes = 0;
+function recomputeAllStatuses(tab) {
+  const rm = roadmaps[tab];
+  const nm = nodeMaps[tab];
+  let changed = true, passes = 0;
   while (changed && passes < 20) {
     changed = false;
-    roadmap.nodes.forEach(n => {
+    rm.nodes.forEach(n => {
       const prev = n.status;
-      n.status = computeStatus(n);
+      n.status = computeStatus(n, nm);
       if (n.status !== prev) changed = true;
     });
     passes++;
@@ -473,35 +560,40 @@ function recomputeAllStatuses() {
 }
 
 // ── LOAD ──
-async function load() {
-  const res = await fetch('./data/roadmap.json');
-  roadmap = await res.json();
+async function loadAll() {
+  const [backendRes, pipecatRes] = await Promise.all([
+    fetch('./data/roadmap.json'),
+    fetch('./data/pipecat-roadmap.json'),
+  ]);
+  roadmaps.backend  = await backendRes.json();
+  roadmaps.pipecat  = await pipecatRes.json();
 
-  // Build map
-  roadmap.nodes.forEach(n => {
-    n._completed   = false;
-    n._in_progress = false;
-    nodeMap[n.id]  = n;
+  ['backend', 'pipecat'].forEach(tab => {
+    const rm = roadmaps[tab];
+    const nm = {};
+    const nodeX = tab === 'backend' ? NODE_X_BACKEND : NODE_X_PIPECAT;
+    rm.nodes.forEach(n => {
+      n._completed   = false;
+      n._in_progress = false;
+      nm[n.id] = n;
+      const xFrac = nodeX[n.id] ?? 0.5;
+      n._x = MARGIN_X + xFrac * (CW - MARGIN_X * 2);
+      n._y = TIER_Y(n.tier);
+    });
+    nodeMaps[tab] = nm;
+    loadProgress(tab);
+    recomputeAllStatuses(tab);
   });
 
-  // Assign positions
-  roadmap.nodes.forEach(n => {
-    const xFrac = NODE_X[n.id] ?? 0.5;
-    n._x = MARGIN_X + xFrac * (CW - MARGIN_X * 2);
-    n._y = TIER_Y(n.tier);
-  });
-
-  loadProgress();
-  recomputeAllStatuses();
   render();
   fitView();
 }
 
-function loadProgress() {
-  const saved = localStorage.getItem('roadmap-progress-v2');
+function loadProgress(tab) {
+  const saved = localStorage.getItem(`roadmap-progress-${tab}`);
   if (!saved) return;
   const p = JSON.parse(saved);
-  roadmap.nodes.forEach(n => {
+  roadmaps[tab].nodes.forEach(n => {
     if (p[n.id]) {
       n._completed   = p[n.id].completed   || false;
       n._in_progress = p[n.id].in_progress || false;
@@ -511,10 +603,10 @@ function loadProgress() {
 
 function saveProgress() {
   const p = {};
-  roadmap.nodes.forEach(n => {
+  roadmaps[currentTab].nodes.forEach(n => {
     p[n.id] = { completed: n._completed, in_progress: n._in_progress };
   });
-  localStorage.setItem('roadmap-progress-v2', JSON.stringify(p));
+  localStorage.setItem(`roadmap-progress-${currentTab}`, JSON.stringify(p));
 }
 
 // ── RENDER ──
@@ -529,10 +621,12 @@ function renderConnections() {
   svg.setAttribute('width', CW);
   svg.setAttribute('height', CH);
 
-  // Build reverse requires map for drawing connections
-  roadmap.nodes.forEach(target => {
+  const rm = roadmaps[currentTab];
+  const nm = nodeMaps[currentTab];
+
+  rm.nodes.forEach(target => {
     (target.requires || []).forEach(srcId => {
-      const src = nodeMap[srcId];
+      const src = nm[srcId];
       if (!src) return;
 
       const done  = src._completed;
@@ -540,9 +634,9 @@ function renderConnections() {
       const trackColor = TRACK_COLOR[target.track] || '#ffffff';
 
       let stroke, dash, width;
-      if (done)  { stroke = trackColor; dash = 'none'; width = 1.5; }
-      else if (avail) { stroke = trackColor; dash = '3 8'; width = 1; }
-      else { stroke = 'rgba(26,40,64,0.6)'; dash = '2 10'; width = 1; }
+      if (done)        { stroke = trackColor; dash = 'none'; width = 1.5; }
+      else if (avail)  { stroke = trackColor; dash = '3 8';  width = 1; }
+      else             { stroke = 'rgba(26,40,64,0.6)'; dash = '2 10'; width = 1; }
 
       const x1 = src._x, y1 = src._y;
       const x2 = target._x, y2 = target._y;
@@ -554,8 +648,7 @@ function renderConnections() {
       path.setAttribute('stroke-width', width);
       path.setAttribute('fill', 'none');
       if (dash !== 'none') path.setAttribute('stroke-dasharray', dash);
-      if (done) path.setAttribute('opacity', '0.5');
-      else path.setAttribute('opacity', '0.35');
+      path.setAttribute('opacity', done ? '0.5' : '0.35');
       svg.appendChild(path);
     });
   });
@@ -564,14 +657,14 @@ function renderConnections() {
 function renderNodes() {
   document.querySelectorAll('.node').forEach(e => e.remove());
 
-  roadmap.nodes.forEach(n => {
+  const rm = roadmaps[currentTab];
+
+  rm.nodes.forEach(n => {
     const color = TRACK_COLOR[n.track] || '#ffffff';
     const size  = NODE_SIZE(n.id);
 
     const el = document.createElement('div');
     el.className = `node ${n.status}`;
-    if (n.id === 'start')      el.classList.add('is-start');
-    if (n.id === 'semisenior') el.classList.add('is-end');
     el.dataset.id = n.id;
     el.style.left = n._x + 'px';
     el.style.top  = n._y + 'px';
@@ -618,9 +711,10 @@ function renderNodes() {
 }
 
 function updateStats() {
-  const total  = roadmap.nodes.length;
-  const done   = roadmap.nodes.filter(n => n._completed).length;
-  const avail  = roadmap.nodes.filter(n => n.status === 'available').length;
+  const rm = roadmaps[currentTab];
+  const total  = rm.nodes.length;
+  const done   = rm.nodes.filter(n => n._completed).length;
+  const avail  = rm.nodes.filter(n => n.status === 'available').length;
   const pct    = Math.round(done / total * 100);
   document.getElementById('stat-done').textContent  = done;
   document.getElementById('stat-avail').textContent = avail;
@@ -629,10 +723,38 @@ function updateStats() {
   document.getElementById('progress-pct').textContent  = pct + '% completado';
 }
 
+// ── TABS ──
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    const t = tab.dataset.tab;
+    if (t === currentTab) return;
+
+    document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+    tab.classList.add('active');
+
+    currentTab = t;
+    selectedId = null;
+    document.getElementById('panel').classList.remove('visible');
+
+    document.body.classList.toggle('pipecat-mode', t === 'pipecat');
+
+    const badge = document.getElementById('tdd-badge');
+    if (t === 'pipecat') {
+      badge.textContent = 'Build Mode';
+    } else {
+      badge.textContent = 'TDD Mode';
+    }
+
+    render();
+    fitView();
+  });
+});
+
 // ── SELECT NODE ──
 function selectNode(id) {
   selectedId = id;
-  const n = nodeMap[id];
+  const nm = nodeMaps[currentTab];
+  const n = nm[id];
   if (!n) return;
 
   const color = TRACK_COLOR[n.track] || '#7c4dff';
@@ -644,12 +766,11 @@ function selectNode(id) {
   document.getElementById('panel-status-badge').textContent = STATUS_LABEL[n.status];
   document.getElementById('panel-desc').textContent  = n.description;
 
-  // Requires
   const reqWrap = document.getElementById('panel-requires-wrap');
   const reqList = document.getElementById('panel-requires');
   if (n.requires && n.requires.length > 0) {
     reqList.innerHTML = n.requires.map(r => {
-      const rn = nodeMap[r];
+      const rn = nm[r];
       const done = rn?._completed;
       return `<div class="req-item ${done?'done-item':'pending-item'}">
         <span class="req-dot ${done?'done':'pending'}"></span>
@@ -661,7 +782,6 @@ function selectNode(id) {
     reqWrap.style.display = 'none';
   }
 
-  // Deliverables
   const delWrap = document.getElementById('panel-deliverables-wrap');
   const delList = document.getElementById('panel-deliverables');
   if (n.deliverables && n.deliverables.length > 0) {
@@ -676,7 +796,6 @@ function selectNode(id) {
     delWrap.style.display = 'none';
   }
 
-  // Assessment (semisenior only)
   const assWrap = document.getElementById('panel-assessment-wrap');
   const assList = document.getElementById('panel-assessment');
   if (n.assessment && n.assessment.length > 0) {
@@ -691,7 +810,6 @@ function selectNode(id) {
     assWrap.style.display = 'none';
   }
 
-  // Button
   const btn = document.getElementById('panel-btn');
   btn.textContent = BTN_LABEL[n.status];
   btn.disabled = n.status === 'locked' || n.status === 'completed';
@@ -707,12 +825,13 @@ document.getElementById('panel-close').addEventListener('click', () => {
 
 document.getElementById('panel-btn').addEventListener('click', () => {
   if (!selectedId) return;
-  const n = nodeMap[selectedId];
+  const nm = nodeMaps[currentTab];
+  const n = nm[selectedId];
   if (!n) return;
 
   if (n.status === 'available') {
     n._in_progress = true;
-    showToast('Skill iniciado — escribí sin IA 🔴');
+    showToast('Skill iniciado 🔥');
   } else if (n.status === 'in_progress') {
     n._in_progress = false;
     n._completed   = true;
@@ -720,7 +839,7 @@ document.getElementById('panel-btn').addEventListener('click', () => {
   }
 
   saveProgress();
-  recomputeAllStatuses();
+  recomputeAllStatuses(currentTab);
   render();
   selectNode(selectedId);
 });
@@ -770,8 +889,8 @@ function fitView() {
   applyTransform();
 }
 
-document.getElementById('zoom-in').addEventListener('click', () => { scale = Math.min(2.5, scale*1.2); applyTransform(); });
-document.getElementById('zoom-out').addEventListener('click',() => { scale = Math.max(0.25, scale/1.2); applyTransform(); });
+document.getElementById('zoom-in').addEventListener('click',  () => { scale = Math.min(2.5, scale*1.2); applyTransform(); });
+document.getElementById('zoom-out').addEventListener('click', () => { scale = Math.max(0.25, scale/1.2); applyTransform(); });
 document.getElementById('zoom-fit').addEventListener('click', fitView);
 
 // ── UTIL ──
@@ -783,7 +902,7 @@ function hexToRgb(hex) {
 }
 
 // ── INIT ──
-load();
+loadAll();
 </script>
 </body>
 </html>
